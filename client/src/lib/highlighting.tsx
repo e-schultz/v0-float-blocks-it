@@ -1,5 +1,4 @@
 // Utility for highlighting dispatch patterns and bracketed text
-import { Fragment } from "react";
 
 // Color mappings for different highlight types
 const HIGHLIGHT_COLORS = {
@@ -150,7 +149,7 @@ export function parseAndHighlightText(text: string): JSX.Element {
     // Add text before the match
     if (match.start > currentIndex) {
       const beforeText = text.slice(currentIndex, match.start);
-      parts.push(<Fragment key={`text-${partIndex++}`}>{beforeText}</Fragment>);
+      parts.push(<span key={`text-${partIndex++}`}>{beforeText}</span>);
     }
     
     // Add the highlighted match
@@ -171,7 +170,7 @@ export function parseAndHighlightText(text: string): JSX.Element {
   // Add remaining text
   if (currentIndex < text.length) {
     const remainingText = text.slice(currentIndex);
-    parts.push(<Fragment key={`text-${partIndex++}`}>{remainingText}</Fragment>);
+    parts.push(<span key={`text-${partIndex++}`}>{remainingText}</span>);
   }
   
   return <span>{parts}</span>;

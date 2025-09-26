@@ -252,7 +252,10 @@ export default function MessageBlock({
   };
 
   const handleBlur = () => {
-    setIsEditing(false);
+    // Add a small delay to prevent immediate re-focus conflicts
+    setTimeout(() => {
+      setIsEditing(false);
+    }, 100);
   };
 
   const getRoleColor = (role: MessageRole) => {
