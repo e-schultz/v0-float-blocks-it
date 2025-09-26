@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TerminalCommand from "@/components/terminal-command";
 import Sidebar from "@/components/sidebar";
-import ContentBlock from "@/components/content-block";
+import ThreadView from "@/components/thread-view";
 import RightPanel from "@/components/right-panel";
 import { useBlocks } from "@/hooks/use-blocks";
 import { useWebSocket } from "@/hooks/use-websocket";
@@ -61,60 +61,7 @@ export default function Home() {
         />
         
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto p-6 space-y-4">
-            {isLoading ? (
-              <div className="space-y-4">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="bg-card rounded-xl border border-border p-6">
-                    <div className="animate-pulse space-y-3">
-                      <div className="h-6 bg-muted rounded w-1/3"></div>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-muted rounded"></div>
-                        <div className="h-4 bg-muted rounded w-5/6"></div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : blocks.length === 0 ? (
-              <div className="border-2 border-dashed border-border hover:border-accent/50 rounded-xl p-12 text-center transition-colors">
-                <div className="space-y-4">
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                    <span className="text-2xl">📝</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">No blocks yet</h3>
-                    <p className="text-muted-foreground">
-                      Start building your knowledge base by creating your first block
-                    </p>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Press <kbd className="px-2 py-1 bg-muted rounded text-xs">Cmd+K</kbd> or type{" "}
-                    <code className="px-1 py-0.5 bg-muted rounded text-xs">/new</code> in the command bar
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {blocks.map((block) => (
-                  <ContentBlock key={block.id} block={block} />
-                ))}
-                
-                <div className="border-2 border-dashed border-border hover:border-accent/50 rounded-xl p-6 text-center transition-colors group cursor-pointer">
-                  <div className="space-y-2">
-                    <div className="text-2xl text-muted-foreground group-hover:text-accent transition-colors">+</div>
-                    <p className="text-muted-foreground group-hover:text-foreground">
-                      <strong>Add a new block</strong><br />
-                      <span className="text-sm">
-                        Press <kbd className="px-1 py-0.5 text-xs bg-muted rounded">Cmd+K</kbd> or type{" "}
-                        <code>/new</code> in the command bar
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <ThreadView blocks={blocks} isLoading={isLoading} />
         </main>
 
         <RightPanel />
