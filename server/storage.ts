@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 
 export interface IStorage {
   // Block operations
-  getBlocks(): Promise<Block[]>;
+  getBlocks(): Promise<BlockWithLinks[]>;
   getBlock(id: string): Promise<Block | undefined>;
   getBlockWithLinks(id: string): Promise<BlockWithLinks | undefined>;
   createBlock(block: InsertBlock): Promise<Block>;
@@ -38,10 +38,21 @@ export class MemStorage implements IStorage {
     this.comments = new Map();
   }
 
-  async getBlocks(): Promise<Block[]> {
-    return Array.from(this.blocks.values()).sort((a, b) => 
+  async getBlocks(): Promise<BlockWithLinks[]> {
+    const blocks = Array.from(this.blocks.values()).sort((a, b) => 
       new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
+    
+    // Convert each block to BlockWithLinks format
+    const blocksWithLinks: BlockWithLinks[] = [];
+    for (const block of blocks) {
+      const blockWithLinks = await this.getBlockWithLinks(block.id);
+      if (blockWithLinks) {
+        blocksWithLinks.push(blockWithLinks);
+      }
+    }
+    
+    return blocksWithLinks;
   }
 
   async getBlock(id: string): Promise<Block | undefined> {

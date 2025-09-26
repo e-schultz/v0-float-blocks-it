@@ -18,6 +18,11 @@ export function useWebSocket() {
       console.log("WebSocket connected");
     };
 
+    ws.onerror = (error) => {
+      console.error("WebSocket connection error:", error);
+      // Don't crash the app if WebSocket fails
+    };
+
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
