@@ -14,6 +14,7 @@ interface ThreadMessage {
   role: MessageRole;
   createdAt: Date;
   updatedAt: Date;
+  lastSyncedBlockUpdatedAt?: string; // Track when we last synced with backend
   originalBlockId?: string; // Link to original block if converted
 }
 
@@ -51,14 +52,18 @@ export default function ThreadView({ blocks, isLoading }: ThreadViewProps) {
         
         // If we have an existing message, preserve its role and other local state
         if (existingMessage && existingMessage.originalBlockId === block.id) {
+          const shouldUpdateContent = !existingMessage.lastSyncedBlockUpdatedAt || 
+                                    block.updatedAt > existingMessage.lastSyncedBlockUpdatedAt;
+          
           return {
             ...existingMessage,
-            // Update content only if the backend block actually changed
-            content: block.updatedAt !== existingMessage.updatedAt.toISOString() 
+            // Update content only if the backend block actually changed since last sync
+            content: shouldUpdateContent 
               ? `# ${block.title}\n\n${block.content}`
               : existingMessage.content,
             createdAt: new Date(block.createdAt),
-            updatedAt: new Date(block.updatedAt),
+            // Don't update updatedAt from backend - keep local changes
+            lastSyncedBlockUpdatedAt: block.updatedAt,
           };
         }
 
@@ -69,6 +74,7 @@ export default function ThreadView({ blocks, isLoading }: ThreadViewProps) {
           role: "You" as MessageRole,
           createdAt: new Date(block.createdAt),
           updatedAt: new Date(block.updatedAt),
+          lastSyncedBlockUpdatedAt: block.updatedAt,
           originalBlockId: block.id
         };
       });
@@ -109,12 +115,16 @@ export default function ThreadView({ blocks, isLoading }: ThreadViewProps) {
           title,
           content
         });
-        return response.json();
+        const result = await response.json();
+        return { result, blockUpdated: true };
       }
-      return null;
+      return { result: null, blockUpdated: false };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/blocks"] });
+    onSuccess: (data) => {
+      // Only invalidate queries if we actually made a backend request
+      if (data?.blockUpdated) {
+        queryClient.invalidateQueries({ queryKey: ["/api/blocks"] });
+      }
     }
   });
 
@@ -135,11 +145,19 @@ export default function ThreadView({ blocks, isLoading }: ThreadViewProps) {
   const handleMessageUpdate = useCallback((id: string, updates: { content?: string; role?: MessageRole }) => {
     setMessages(prev => prev.map(msg => 
       msg.id === id 
-        ? { ...msg, ...updates, updatedAt: new Date() }
+        ? { 
+            ...msg, 
+            ...updates, 
+            // Only update timestamp for content changes, not role changes
+            updatedAt: updates.content !== undefined ? new Date() : msg.updatedAt 
+          }
         : msg
     ));
     
-    updateMessageMutation.mutate({ id, updates });
+    // Only trigger backend mutation for content changes
+    if (updates.content !== undefined) {
+      updateMessageMutation.mutate({ id, updates });
+    }
   }, [updateMessageMutation]);
 
   const handleMessageDelete = useCallback((id: string) => {
