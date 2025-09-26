@@ -75,9 +75,10 @@ export default function MessageBlock({
   // Handle keyboard shortcuts in textarea
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.currentTarget;
+    const { selectionStart, selectionEnd, value } = textarea;
     
     // Delete entire block when cursor is at beginning and backspace/delete is pressed
-    if ((e.key === 'Backspace' || e.key === 'Delete') && textarea.selectionStart === 0 && textarea.selectionEnd === 0) {
+    if ((e.key === 'Backspace' || e.key === 'Delete') && selectionStart === 0 && selectionEnd === 0) {
       e.preventDefault();
       handleDelete();
       return;
@@ -88,6 +89,103 @@ export default function MessageBlock({
       e.preventDefault();
       handleSubmit();
       return;
+    }
+
+    // Tab indentation
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      
+      if (e.shiftKey) {
+        // Shift+Tab: Remove indentation
+        const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
+        const lineEnd = value.indexOf('\n', selectionStart);
+        const actualLineEnd = lineEnd === -1 ? value.length : lineEnd;
+        const currentLine = value.slice(lineStart, actualLineEnd);
+        
+        if (currentLine.startsWith('  ')) {
+          const newContent = value.slice(0, lineStart) + currentLine.slice(2) + value.slice(actualLineEnd);
+          handleContentChange(newContent);
+          
+          // Update cursor position
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = Math.max(lineStart, selectionStart - 2);
+              textareaRef.current.selectionEnd = Math.max(lineStart, selectionEnd - 2);
+            }
+          }, 0);
+        }
+      } else {
+        // Tab: Add indentation
+        const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
+        const beforeCursor = value.slice(0, selectionStart);
+        const afterCursor = value.slice(selectionEnd);
+        
+        const newContent = beforeCursor + '  ' + afterCursor;
+        handleContentChange(newContent);
+        
+        // Update cursor position
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.selectionStart = selectionStart + 2;
+            textareaRef.current.selectionEnd = selectionEnd + 2;
+          }
+        }, 0);
+      }
+      return;
+    }
+
+    // Enter: Smart bullet continuation
+    if (e.key === 'Enter') {
+      const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
+      const lineEnd = value.indexOf('\n', selectionStart);
+      const actualLineEnd = lineEnd === -1 ? value.length : lineEnd;
+      const currentLine = value.slice(lineStart, actualLineEnd);
+      
+      // Check for bullet patterns
+      const bulletMatch = currentLine.match(/^(\s*)([-*+•]|\d+\.)\s/);
+      if (bulletMatch) {
+        e.preventDefault();
+        const indent = bulletMatch[1];
+        const bulletType = bulletMatch[2];
+        
+        // If the line is just a bullet with no content, remove it
+        if (currentLine.trim() === bulletMatch[0].trim()) {
+          const newContent = value.slice(0, lineStart) + value.slice(actualLineEnd);
+          handleContentChange(newContent);
+          
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = lineStart;
+              textareaRef.current.selectionEnd = lineStart;
+            }
+          }, 0);
+          return;
+        }
+        
+        // Continue the bullet point
+        let newBullet;
+        if (/^\d+\./.test(bulletType)) {
+          const num = parseInt(bulletType.replace('.', ''), 10);
+          newBullet = `${num + 1}.`;
+        } else {
+          newBullet = bulletType;
+        }
+        
+        const beforeCursor = value.slice(0, selectionStart);
+        const afterCursor = value.slice(selectionEnd);
+        const newContent = beforeCursor + '\n' + indent + newBullet + ' ' + afterCursor;
+        
+        handleContentChange(newContent);
+        
+        setTimeout(() => {
+          if (textareaRef.current) {
+            const newPos = selectionStart + 1 + indent.length + newBullet.length + 1;
+            textareaRef.current.selectionStart = newPos;
+            textareaRef.current.selectionEnd = newPos;
+          }
+        }, 0);
+        return;
+      }
     }
   };
 
