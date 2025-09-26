@@ -38,17 +38,47 @@ export default function ThreadView({ blocks, isLoading }: ThreadViewProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Update messages when blocks change
+  // Update messages when blocks change, preserving existing roles and local state
   useEffect(() => {
-    const newMessages = blocks.map(block => ({
-      id: block.id,
-      content: `# ${block.title}\n\n${block.content}`,
-      role: "You" as MessageRole,
-      createdAt: new Date(block.createdAt),
-      updatedAt: new Date(block.updatedAt),
-      originalBlockId: block.id
-    }));
-    setMessages(newMessages);
+    setMessages(prevMessages => {
+      // Create a map of existing messages by ID for quick lookup
+      const existingMessagesMap = new Map(
+        prevMessages.map(msg => [msg.id, msg])
+      );
+
+      const newMessages = blocks.map(block => {
+        const existingMessage = existingMessagesMap.get(block.id);
+        
+        // If we have an existing message, preserve its role and other local state
+        if (existingMessage && existingMessage.originalBlockId === block.id) {
+          return {
+            ...existingMessage,
+            // Update content only if the backend block actually changed
+            content: block.updatedAt !== existingMessage.updatedAt.toISOString() 
+              ? `# ${block.title}\n\n${block.content}`
+              : existingMessage.content,
+            createdAt: new Date(block.createdAt),
+            updatedAt: new Date(block.updatedAt),
+          };
+        }
+
+        // New message - use default role
+        return {
+          id: block.id,
+          content: `# ${block.title}\n\n${block.content}`,
+          role: "You" as MessageRole,
+          createdAt: new Date(block.createdAt),
+          updatedAt: new Date(block.updatedAt),
+          originalBlockId: block.id
+        };
+      });
+
+      // Add any messages that don't correspond to blocks (user-created messages)
+      const blockIds = new Set(blocks.map(b => b.id));
+      const userMessages = prevMessages.filter(msg => !msg.originalBlockId || !blockIds.has(msg.id));
+      
+      return [...newMessages, ...userMessages];
+    });
   }, [blocks]);
 
   const updateMessageMutation = useMutation({
@@ -57,10 +87,23 @@ export default function ThreadView({ blocks, isLoading }: ThreadViewProps) {
       if (message?.originalBlockId && updates.content) {
         // Parse title and content from the message format
         const lines = updates.content.split('\n');
-        const titleLine = lines.find(line => line.startsWith('# '));
-        const title = titleLine ? titleLine.substring(2).trim() : 'Untitled';
-        const contentStart = lines.findIndex(line => line.startsWith('# ')) + 1;
-        const content = lines.slice(contentStart + 1).join('\n').trim(); // Skip empty line after title
+        const titleLineIndex = lines.findIndex(line => line.startsWith('# '));
+        
+        let title: string;
+        let content: string;
+        
+        if (titleLineIndex !== -1) {
+          // Title found
+          title = lines[titleLineIndex].substring(2).trim();
+          // Content starts after the title line and optional blank line
+          const contentStartIndex = titleLineIndex + 1;
+          const nextContentIndex = lines[contentStartIndex] === '' ? contentStartIndex + 1 : contentStartIndex;
+          content = lines.slice(nextContentIndex).join('\n').trim();
+        } else {
+          // No title found, treat entire content as message content
+          title = 'Message';
+          content = updates.content.trim();
+        }
 
         const response = await apiRequest("PUT", `/api/blocks/${message.originalBlockId}`, {
           title,

@@ -72,31 +72,24 @@ export default function MessageBlock({
     }
   }, [content, isDirty, initialContent, updateMutation]);
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!blockRef.current) return;
-      
-      // Check if cursor is at the very beginning of the block
-      const textarea = textareaRef.current;
-      if (textarea && document.activeElement === textarea) {
-        // Delete entire block when cursor is at beginning and backspace/delete is pressed
-        if ((e.key === 'Backspace' || e.key === 'Delete') && textarea.selectionStart === 0 && textarea.selectionEnd === 0) {
-          e.preventDefault();
-          handleDelete();
-        }
-        
-        // Submit message with Cmd+Enter (like Zed)
-        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-          e.preventDefault();
-          handleSubmit();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  // Handle keyboard shortcuts in textarea
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+    
+    // Delete entire block when cursor is at beginning and backspace/delete is pressed
+    if ((e.key === 'Backspace' || e.key === 'Delete') && textarea.selectionStart === 0 && textarea.selectionEnd === 0) {
+      e.preventDefault();
+      handleDelete();
+      return;
+    }
+    
+    // Submit message with Cmd+Enter (like Zed)
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+      return;
+    }
+  };
 
   // Auto-resize textarea
   useEffect(() => {
@@ -208,6 +201,7 @@ export default function MessageBlock({
         ref={textareaRef}
         value={content}
         onChange={(e) => handleContentChange(e.target.value)}
+        onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholder={role === "You" ? "Type your message here..." : "Response content..."}
