@@ -114,4 +114,79 @@
     stroke-width: 1px;
     stroke-opacity: 0.6;
   }
+
+  /* Highlighting for dispatch patterns and bracketed text */
+  .highlight {
+    @apply font-medium text-sm;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+  }
+
+  .highlight:hover {
+    @apply scale-105;
+  }
+
+  .highlight-red {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .dark .highlight-red {
+    @apply bg-red-900/30 text-red-300;
+  }
+
+  .highlight-blue {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .dark .highlight-blue {
+    @apply bg-blue-900/30 text-blue-300;
+  }
+
+  .highlight-green {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .dark .highlight-green {
+    @apply bg-green-900/30 text-green-300;
+  }
+
+  .highlight-yellow {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .dark .highlight-yellow {
+    @apply bg-yellow-900/30 text-yellow-300;
+  }
+
+  .highlight-orange {
+    @apply bg-orange-100 text-orange-800;
+  }
+
+  .dark .highlight-orange {
+    @apply bg-orange-900/30 text-orange-300;
+  }
+
+  .highlight-purple {
+    @apply bg-purple-100 text-purple-800;
+  }
+
+  .dark .highlight-purple {
+    @apply bg-purple-900/30 text-purple-300;
+  }
+
+  .highlight-pink {
+    @apply bg-pink-100 text-pink-800;
+  }
+
+  .dark .highlight-pink {
+    @apply bg-pink-900/30 text-pink-300;
+  }
+
+  .highlight-gray {
+    @apply bg-gray-100 text-gray-800;
+  }
+
+  .dark .highlight-gray {
+    @apply bg-gray-800/30 text-gray-300;
+  }
 }
