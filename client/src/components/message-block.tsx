@@ -117,19 +117,40 @@ export default function MessageBlock({
       } else {
         // Tab: Add indentation
         const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
-        const beforeCursor = value.slice(0, selectionStart);
-        const afterCursor = value.slice(selectionEnd);
+        const lineEnd = value.indexOf('\n', selectionStart);
+        const actualLineEnd = lineEnd === -1 ? value.length : lineEnd;
+        const currentLine = value.slice(lineStart, actualLineEnd);
         
-        const newContent = beforeCursor + '  ' + afterCursor;
-        handleContentChange(newContent);
-        
-        // Update cursor position
-        setTimeout(() => {
-          if (textareaRef.current) {
-            textareaRef.current.selectionStart = selectionStart + 2;
-            textareaRef.current.selectionEnd = selectionEnd + 2;
-          }
-        }, 0);
+        // Check if we're on a bullet line - if so, indent the entire line
+        const bulletMatch = currentLine.match(/^(\s*)([-*+•]|\d+\.)\s/);
+        if (bulletMatch) {
+          // Indent the entire bullet line
+          const newContent = value.slice(0, lineStart) + '  ' + currentLine + value.slice(actualLineEnd);
+          handleContentChange(newContent);
+          
+          // Update cursor position (add 2 for the indent)
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = selectionStart + 2;
+              textareaRef.current.selectionEnd = selectionEnd + 2;
+            }
+          }, 0);
+        } else {
+          // Normal indentation at cursor position
+          const beforeCursor = value.slice(0, selectionStart);
+          const afterCursor = value.slice(selectionEnd);
+          
+          const newContent = beforeCursor + '  ' + afterCursor;
+          handleContentChange(newContent);
+          
+          // Update cursor position
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = selectionStart + 2;
+              textareaRef.current.selectionEnd = selectionEnd + 2;
+            }
+          }, 0);
+        }
       }
       return;
     }
