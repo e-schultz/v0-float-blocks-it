@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(210, 40%, 98%);
+  --foreground: hsl(222.2, 84%, 4.9%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(222.2, 84%, 4.9%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(222.2, 84%, 4.9%);
+  --primary: hsl(217, 32%, 17%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(215, 25%, 27%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(215.4, 16.3%, 46.9%);
+  --accent: hsl(262, 83%, 58%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --border: hsl(214.3, 31.8%, 91.4%);
+  --input: hsl(214.3, 31.8%, 91.4%);
+  --ring: hsl(262, 83%, 58%);
+  --terminal: hsl(220, 26%, 10%);
+  --success: hsl(142, 76%, 36%);
+  --warning: hsl(25, 95%, 53%);
+  --radius: 0.5rem;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', Monaco, Consolas, monospace;
+}
+
+.dark {
+  --background: hsl(220, 26%, 10%);
+  --foreground: hsl(210, 40%, 98%);
+  --card: hsl(220, 25%, 12%);
+  --card-foreground: hsl(210, 40%, 98%);
+  --popover: hsl(220, 25%, 12%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  --primary: hsl(210, 40%, 98%);
+  --primary-foreground: hsl(217, 32%, 17%);
+  --secondary: hsl(215, 25%, 27%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --muted: hsl(215, 25%, 16%);
+  --muted-foreground: hsl(215.4, 16.3%, 56%);
+  --accent: hsl(262, 83%, 58%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 62.8%, 50%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --border: hsl(215, 25%, 20%);
+  --input: hsl(215, 25%, 20%);
+  --ring: hsl(262, 83%, 58%);
+  --terminal: hsl(220, 26%, 6%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer components {
+  .terminal-cursor::after {
+    content: '|';
+    animation: blink 1s infinite;
+    color: hsl(var(--accent));
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .block-handle {
+    cursor: grab;
+  }
+
+  .block-handle:active {
+    cursor: grabbing;
+  }
+
+  .discussion-thread {
+    border-left: 2px solid hsl(var(--accent));
+    padding-left: 12px;
+    margin-left: 8px;
+  }
+
+  .graph-canvas {
+    background: radial-gradient(circle at 25% 25%, hsl(var(--accent) / 0.05) 0%, transparent 50%);
+  }
+
+  .content-block {
+    transition: all 0.2s ease;
+  }
+
+  .content-block:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1);
+  }
+
+  .graph-node {
+    fill: hsl(var(--accent));
+    stroke: hsl(var(--primary));
+    stroke-width: 2px;
+  }
+
+  .graph-link {
+    stroke: hsl(var(--primary));
+    stroke-width: 1px;
+    stroke-opacity: 0.6;
+  }
+}
