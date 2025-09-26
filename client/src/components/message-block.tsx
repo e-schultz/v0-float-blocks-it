@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { parseAndHighlightText } from "@/lib/highlighting";
 
 type MessageRole = "You" | "Assistant" | "System";
 
@@ -316,23 +317,40 @@ export default function MessageBlock({
         </div>
       </div>
 
-      <textarea
-        ref={textareaRef}
-        value={content}
-        onChange={(e) => handleContentChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        placeholder={role === "You" ? "Type your message here..." : "Response content..."}
-        className={cn(
-          "w-full bg-transparent border-none resize-none outline-none",
-          "font-mono text-sm leading-relaxed",
-          "placeholder:text-muted-foreground/50",
-          isEditing ? "ring-0" : "cursor-pointer"
-        )}
-        style={{ minHeight: "2rem" }}
-        data-testid={`textarea-${id}`}
-      />
+      {isEditing ? (
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => handleContentChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          placeholder={role === "You" ? "Type your message here..." : "Response content..."}
+          className={cn(
+            "w-full bg-transparent border-none resize-none outline-none",
+            "font-mono text-sm leading-relaxed",
+            "placeholder:text-muted-foreground/50",
+            "ring-0"
+          )}
+          style={{ minHeight: "2rem" }}
+          data-testid={`textarea-${id}`}
+        />
+      ) : (
+        <div
+          className={cn(
+            "w-full bg-transparent cursor-text",
+            "font-mono text-sm leading-relaxed whitespace-pre-wrap",
+            "min-h-8 py-1",
+            !content && "text-muted-foreground/50"
+          )}
+          onClick={handleFocus}
+          data-testid={`content-display-${id}`}
+        >
+          {content ? parseAndHighlightText(content) : (
+            role === "You" ? "Type your message here..." : "Response content..."
+          )}
+        </div>
+      )}
       
       {role === "You" && isEditing && (
         <div className="mt-2 text-xs text-muted-foreground">
