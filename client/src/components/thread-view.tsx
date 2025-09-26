@@ -24,17 +24,29 @@ interface ThreadViewProps {
 }
 
 export default function ThreadView({ blocks, isLoading }: ThreadViewProps) {
-  const [messages, setMessages] = useState<ThreadMessage[]>(() => 
-    // Convert blocks to messages initially
-    blocks.map(block => ({
+  const [messages, setMessages] = useState<ThreadMessage[]>(() => {
+    const convertedBlocks = blocks.map(block => ({
       id: block.id,
       content: `# ${block.title}\n\n${block.content}`,
       role: "You" as MessageRole,
       createdAt: new Date(block.createdAt),
       updatedAt: new Date(block.updatedAt),
       originalBlockId: block.id
-    }))
-  );
+    }));
+
+    // Always ensure we have at least one empty message to start with
+    if (convertedBlocks.length === 0) {
+      return [{
+        id: nanoid(),
+        content: "",
+        role: "You" as MessageRole,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }];
+    }
+
+    return convertedBlocks;
+  });
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -83,7 +95,20 @@ export default function ThreadView({ blocks, isLoading }: ThreadViewProps) {
       const blockIds = new Set(blocks.map(b => b.id));
       const userMessages = prevMessages.filter(msg => !msg.originalBlockId || !blockIds.has(msg.id));
       
-      return [...newMessages, ...userMessages];
+      const allMessages = [...newMessages, ...userMessages];
+      
+      // Always ensure we have at least one empty message available
+      if (allMessages.length === 0) {
+        return [{
+          id: nanoid(),
+          content: "",
+          role: "You" as MessageRole,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }];
+      }
+
+      return allMessages;
     });
   }, [blocks]);
 
@@ -199,58 +224,34 @@ export default function ThreadView({ blocks, isLoading }: ThreadViewProps) {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="space-y-0 font-mono">
-        {messages.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="space-y-4">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                <span className="text-2xl">💭</span>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Start your first thread</h3>
-                <p className="text-muted-foreground">
-                  Click below to create your first message, or use the terminal command bar
-                </p>
-              </div>
-              <button
-                onClick={handleAddMessage}
-                className="inline-flex items-center space-x-2 px-4 py-2 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors"
-                data-testid="button-add-first-message"
-              >
-                <span>+</span>
-                <span>Add message</span>
-              </button>
+        <>
+          {messages.map((message, index) => (
+            <MessageBlock
+              key={message.id}
+              id={message.id}
+              content={message.content}
+              role={message.role}
+              createdAt={message.createdAt}
+              updatedAt={message.updatedAt}
+              onUpdate={handleMessageUpdate}
+              onDelete={handleMessageDelete}
+              isFirst={index === 0}
+            />
+          ))}
+          
+          <button
+            onClick={handleAddMessage}
+            className="mt-4 w-full border-2 border-dashed border-muted hover:border-accent/50 rounded-lg p-4 text-center transition-colors group"
+            data-testid="button-add-message"
+          >
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground group-hover:text-accent transition-colors">+</div>
+              <p className="text-muted-foreground group-hover:text-foreground text-sm">
+                Add new message
+              </p>
             </div>
-          </div>
-        ) : (
-          <>
-            {messages.map((message, index) => (
-              <MessageBlock
-                key={message.id}
-                id={message.id}
-                content={message.content}
-                role={message.role}
-                createdAt={message.createdAt}
-                updatedAt={message.updatedAt}
-                onUpdate={handleMessageUpdate}
-                onDelete={handleMessageDelete}
-                isFirst={index === 0}
-              />
-            ))}
-            
-            <button
-              onClick={handleAddMessage}
-              className="mt-4 w-full border-2 border-dashed border-muted hover:border-accent/50 rounded-lg p-4 text-center transition-colors group"
-              data-testid="button-add-message"
-            >
-              <div className="space-y-2">
-                <div className="text-2xl text-muted-foreground group-hover:text-accent transition-colors">+</div>
-                <p className="text-muted-foreground group-hover:text-foreground text-sm">
-                  Add new message
-                </p>
-              </div>
-            </button>
-          </>
-        )}
+          </button>
+        </>
       </div>
     </div>
   );
